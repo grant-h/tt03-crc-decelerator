@@ -179,7 +179,7 @@ uint64_t crc_generic_unrolled(struct crc_info *param, const uint8_t *buf, size_t
 void crc_datapath1(struct crc_info *param, uint64_t *crc, uint64_t topbitmask, uint64_t bitmask, bool v) {
   bool isset = !!((*crc >> (param->bitwidth - 1)) ^ v);
   uint64_t crc_shifted = (*crc << 1) & bitmask;
-  *crc = isset ? crc_shifted ^ param->poly | 1 : crc_shifted;
+  *crc = isset ? (crc_shifted ^ param->poly) : crc_shifted;
 }
 
 int main(int argc, char *argv[])

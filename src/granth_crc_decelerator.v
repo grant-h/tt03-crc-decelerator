@@ -37,17 +37,24 @@ module granth_crc_decelerator (
   wire [3:0] data_in;
   wire [1:0] cmd;
 
+  // Friendly input names
   assign clk = io_in[0];
   assign rst = io_in[1];
   assign cmd = io_in[3:2];
   assign data_in = io_in[7:4];
 
+  // Latched command and input data
+  reg [1:0] current_cmd;
+  reg [3:0] cur_data_in;
+
+  // Top-level commands
   localparam
     CMD_RESET = 2'd0,
     CMD_SETUP = 2'd1,
     CMD_MESSAGE = 2'd2,
     CMD_FINAL = 2'd3;
 
+  // CMD_SETUP FSM
   localparam
     SETUP_START = 3'd0,
     SETUP_CONFIG_LO = 3'd1,
@@ -58,20 +65,17 @@ module granth_crc_decelerator (
     SETUP_DONE = 3'd6;
 
   reg [2:0] setup_fsm;
+  // Max nibbles is BITWIDTH/4
+  reg [3:0] setup_nibble_count;
 
+  // CRC primary parameters
+  reg [5:0] bitwidth;
+  wire [5-2:0] bitwidth_nibbles;
   reg crc_reflect_in, crc_reflect_out;
   reg [`BITWIDTH-1:0] crc_poly;
   reg [`BITWIDTH-1:0] crc_init;
   reg [`BITWIDTH-1:0] crc_xor;
 
-  reg [1:0] current_cmd;
-  reg [3:0] cur_data_in;
-  reg [5:0] bitwidth;
-
-  // Max nibbles is BITWIDTH/4
-  reg [3:0] setup_nibble_count;
-
-  wire [5-2:0] bitwidth_nibbles;
   assign bitwidth_nibbles = bitwidth[5:2];
 
   wire setup_starting = current_cmd == CMD_SETUP && setup_fsm == SETUP_START;
@@ -79,6 +83,10 @@ module granth_crc_decelerator (
 
   // TODO: handle non-nibble aligned bitwidth
   wire bitwidth_reached = bitwidth_nibbles == (setup_nibble_count + 1);
+
+  /////////////////////////////////
+  // Common Registers and Logic
+  /////////////////////////////////
 
   // Latch a copy of data from user input
   always @(posedge clk) begin
@@ -106,6 +114,10 @@ module granth_crc_decelerator (
       endcase
     end
   end
+
+  /////////////////////////////////
+  // CMD_SETUP Registers and Logic
+  /////////////////////////////////
 
   always @(posedge clk) begin
     if (rst) begin
@@ -194,5 +206,9 @@ module granth_crc_decelerator (
     end
   end
   endgenerate
+
+  /////////////////////////////////
+  // CRC Datapath
+  /////////////////////////////////
 
 endmodule

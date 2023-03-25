@@ -16,6 +16,7 @@ async def bringup(dut):
     dut.shift.value = False
     dut.load.value = False
     dut.data.value = 0
+    dut.bitwidth.value = (64-1)
     dut.taps.value = 0
 
     await RisingEdge(dut.clk)
@@ -103,3 +104,42 @@ async def test_lfsr_shifting(dut):
     # MSB is set, taps are active, so 0 ^ all_ones = all_ones
     await ClockCycles(dut.clk, 1)
     assert dut.value.value == all_ones
+
+@cocotb.test()
+async def test_lfsr_bitwidth_shift(dut):
+    await bringup(dut)
+
+    test_value = 0xabcdef012345678
+
+    dut.taps.value = 0x00
+
+    for bitwidth in range(1, 64):
+        bitmask = (1 << bitwidth)-1
+        init_value = test_value & bitmask
+        dut._log.info("LFSR bitwidth %d - init 0x%x, %s",
+                bitwidth, init_value, bin(init_value))
+
+        dut.bitwidth.value = (bitwidth-1)
+        dut.init_value.value = init_value
+        dut.load.value = True
+
+        await ClockCycles(dut.clk, 2)
+        # confirm value was loaded
+        assert dut.value.value == init_value
+
+        # start shifting (<< left shift)
+        dut.load.value = False
+        dut.shift.value = True
+        await ClockCycles(dut.clk, 1)
+
+        # Confirm that shifting works at this bitwidth
+        for i in range(bitwidth):
+            v = int(dut.value.value) & bitmask
+            expected_v = (init_value << i) & bitmask
+
+            assert v == expected_v
+
+            #dut._log.info("0x%02x %s %s", v, bin(v), bin(expected_v))
+            await ClockCycles(dut.clk, 1)
+
+        dut.shift.value = False

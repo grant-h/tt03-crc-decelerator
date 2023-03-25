@@ -9,6 +9,7 @@ module lfsrN_tb #(
     input load,
     input shift,
     input data,
+    input [5:0] bitwidth,
     input [WIDTH-1:0] taps,
     input [WIDTH-1:0] init_value,
     output [WIDTH-1:0] value
@@ -31,6 +32,7 @@ module lfsrN_tb #(
         load,
         shift,
         data,
+        bitwidth,
         taps,
         init_value,
         value
