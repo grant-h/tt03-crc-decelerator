@@ -1,5 +1,22 @@
 ![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg)
 
+# CRC Decelerator
+
+_"The worlds slowest CRC!"_
+
+The CRC decelerator is a reconfigurable CRC block that can be programmed to
+calculate different CRC values up to 64-bits with arbitrary length
+streamed input data. Since clock speeds are low, its unlikely that this CRC
+engine will be faster than the CPU streaming in data, hence "decelerator".
+
+To begin, a `SETUP` bitstream containing the
+bitwidth, reflect in/out, CRC poly, init, and XOR out is sent.  Then the
+`MESSAGE` is streamed in 4-bits at a time until the message is complete.
+Finally, the `FINAL` is signaled, leading the final CRC value to be streamed out.
+To calculate another CRC fresh, send `RESET`.
+
+--------------
+
 # What is Tiny Tapeout?
 
 TinyTapeout is an educational project that aims to make it easier and cheaper than ever to get your digital designs manufactured on a real chip!

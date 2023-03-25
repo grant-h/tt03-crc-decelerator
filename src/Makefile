@@ -9,7 +9,14 @@ TOPLEVEL_LANG ?= verilog
 ifneq ($(GATES),yes)
 
 # this is the only part you should need to modify:
-VERILOG_SOURCES += $(PWD)/tb.v $(PWD)/counter.v $(PWD)/decoder.v
+VERILOG_SOURCES += $(PWD)/tb.v \
+		   $(PWD)/reflect8_tb.v \
+		   $(PWD)/reflect8.v \
+		   $(PWD)/reflect8N.v \
+		   $(PWD)/lfsrN.v \
+		   $(PWD)/lfsrN_tb.v \
+		   $(PWD)/granth_crc_decelerator.v \
+		   $(PWD)/crc_decelerator_tb.v
 
 else
 
@@ -27,10 +34,16 @@ VERILOG_SOURCES += $(PWD)/tb.v $(PWD)/gate_level_netlist.v
 endif
 
 # TOPLEVEL is the name of the toplevel module in your Verilog or VHDL file
-TOPLEVEL = tb
+TOPLEVEL = crc_decelerator_tb
 
 # MODULE is the basename of the Python test file
-MODULE = test
+MODULE = crc_decelerator_tb
+
+tests:
+	$(MAKE) sim TOPLEVEL=crc_decelerator_tb MODULE=crc_decelerator_tb
+	#$(MAKE) sim TOPLEVEL=lfsrN_tb MODULE=lfsrN_tb
+	#$(MAKE) sim TOPLEVEL=reflect8_tb MODULE=reflect8_tb
+	#$(MAKE) sim TOPLEVEL=reflect8N_tb MODULE=reflect8N_tb
 
 # include cocotb's make rules to take care of the simulator setup
 include $(shell cocotb-config --makefiles)/Makefile.sim
