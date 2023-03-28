@@ -15,7 +15,8 @@ VERILOG_SOURCES += $(PWD)/granth_crc_decelerator.v \
 		   $(PWD)/reflect8.v \
 		   $(PWD)/reflect8N.v \
 		   $(PWD)/lfsrN.v \
-		   $(PWD)/lfsrN_tb.v
+		   $(PWD)/lfsrN_tb.v \
+		   $(PWD)/crcN.v
 
 else
 
@@ -39,10 +40,10 @@ TOPLEVEL = crc_decelerator_tb
 MODULE = crc_decelerator_tb
 
 my_sim:
-	#$(MAKE) sim TOPLEVEL=crc_decelerator_tb MODULE=crc_decelerator_tb
-	$(MAKE) sim TOPLEVEL=lfsrN_tb MODULE=lfsrN_tb
-	#$(MAKE) sim TOPLEVEL=reflect8_tb MODULE=reflect8_tb
-	#$(MAKE) sim TOPLEVEL=reflect8N_tb MODULE=reflect8N_tb
+	$(MAKE) clean sim TOPLEVEL=crc_decelerator_tb MODULE=crc_decelerator_tb
+	$(MAKE) clean sim TOPLEVEL=lfsrN_tb MODULE=lfsrN_tb
+	$(MAKE) clean sim TOPLEVEL=reflect8_tb MODULE=reflect8_tb
+	$(MAKE) clean sim TOPLEVEL=reflect8N_tb MODULE=reflect8N_tb
 
 # include cocotb's make rules to take care of the simulator setup
 include $(shell cocotb-config --makefiles)/Makefile.sim

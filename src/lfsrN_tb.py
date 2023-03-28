@@ -2,6 +2,8 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, FallingEdge, Timer, ClockCycles
 
+from common_test import *
+
 lfsr_bits = 64
 init_value = 0x1234567890abcdef
 all_ones = (1 << lfsr_bits) - 1
@@ -104,6 +106,10 @@ async def test_lfsr_shifting(dut):
     # MSB is set, taps are active, so 0 ^ all_ones = all_ones
     await ClockCycles(dut.clk, 1)
     assert dut.value.value == all_ones
+
+@cocotb.test()
+async def test_lfsr_bitwidth_shift(dut):
+    await bringup(dut)
 
 @cocotb.test()
 async def test_lfsr_bitwidth_shift(dut):

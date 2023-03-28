@@ -75,10 +75,12 @@ module granth_crc_decelerator (
   reg [`BITWIDTH-1:0] crc_poly;
   reg [`BITWIDTH-1:0] crc_init;
   reg [`BITWIDTH-1:0] crc_xor;
+  wire [`BITWIDTH-1:0] crc_result;
 
   assign bitwidth_nibbles = bitwidth[5:2];
 
   wire setup_starting = current_cmd == CMD_SETUP && setup_fsm == SETUP_START;
+  wire restart_crc = current_cmd == CMD_RESET || setup_fsm == SETUP_DONE;
   wire in_setup = (setup_fsm != SETUP_START && setup_fsm != SETUP_DONE) || setup_starting;
 
   // TODO: handle non-nibble aligned bitwidth
@@ -96,9 +98,17 @@ module granth_crc_decelerator (
       cur_data_in <= data_in;
   end
 
+  wire [7:0] setup_output = {7'b0, in_setup};;
+  // for debugging live
+  wire [7:0] message_output = {3'b0, crc_bit_index, crc_state};
+  reg [7:0] final_output;
+
+  // Pin driving
   always @(*) begin
     case (current_cmd)
-      CMD_SETUP: io_out = {7'b0, in_setup};
+      CMD_SETUP: io_out = setup_output;
+      CMD_MESSAGE: io_out = message_output;
+      CMD_FINAL: io_out = final_output;
       default: io_out = 0;
     endcase
   end
@@ -210,5 +220,100 @@ module granth_crc_decelerator (
   /////////////////////////////////
   // CRC Datapath
   /////////////////////////////////
+
+  // Stream in two nibbles to make a byte. Feed into crc_main.
+  // Wait 8 cycles to feed in next set
+
+  localparam CRC_INIT = 2'd0,
+    CRC_DATA_LO = 2'd1,
+    CRC_DATA_HI = 2'd2,
+    CRC_SHIFTING = 2'd3;
+
+  reg [1:0] crc_state;
+  reg [2:0] crc_bit_index;
+  reg [2:0] crc_final_byte_index;
+  reg [7:0] crc_data_buf;
+
+  wire cmd_message = current_cmd == CMD_MESSAGE;
+  wire cmd_final = current_cmd == CMD_MESSAGE;
+  wire crc_shifting = crc_state == CRC_SHIFTING;
+
+  always @(*) begin
+    case (crc_final_byte_index)
+      0: final_output = crc_result[8-1:0];
+      1: final_output = crc_result[16-1:8];
+      2: final_output = crc_result[24-1:16];
+      3: final_output = crc_result[32-1:24];
+      4: final_output = crc_result[40-1:32];
+      5: final_output = crc_result[48-1:40];
+      6: final_output = crc_result[56-1:48];
+      7: final_output = crc_result[64-1:56];
+      default: final_output = 0;
+    endcase
+  end
+
+  always @(posedge clk) begin
+    if (rst | restart_crc)
+      crc_state <= CRC_INIT;
+    else begin
+      case (crc_state)
+        CRC_INIT: crc_state <= cmd_message ? CRC_DATA_LO : crc_state;
+        CRC_DATA_LO: crc_state <= cmd_message ? CRC_DATA_HI : crc_state;
+        CRC_DATA_HI: crc_state <= cmd_message ? CRC_SHIFTING : crc_state;
+        CRC_SHIFTING: crc_state <= (crc_bit_index == 7) ? CRC_DATA_LO : crc_state;
+        default: crc_state <= crc_state;
+      endcase
+    end
+  end
+
+  always @(posedge clk) begin
+    if (rst | restart_crc)
+      crc_data_buf <= 0;
+    else begin
+      if (crc_state == CRC_DATA_LO)
+        crc_data_buf <= {crc_data_buf[7:4], cur_data_in};
+      else if (crc_state == CRC_DATA_HI)
+        crc_data_buf <= {cur_data_in, crc_data_buf[3:0]};
+      else
+        crc_data_buf <= crc_data_buf;
+    end
+  end
+
+  always @(posedge clk) begin
+    if (rst | restart_crc)
+      crc_bit_index <= 0;
+    else begin
+      if (crc_shifting)
+        // overflow intended
+        crc_bit_index <= crc_bit_index + 1;
+      else
+        crc_bit_index <= 0;
+    end
+  end
+
+  always @(posedge clk) begin
+    if (rst | restart_crc | ~cmd_final)
+      crc_final_byte_index <= 0;
+    else begin
+      // overflow intended
+      crc_final_byte_index <= crc_final_byte_index + 1;
+    end
+  end
+
+  crcN #(`BITWIDTH) crc_main(
+    .clk (clk),
+    .rst (rst),
+    .initialize (restart_crc),
+    .shift (crc_shifting),
+    .reflect_in (crc_reflect_in),
+    .reflect_out (crc_reflect_out),
+    .bitwidth (bitwidth),
+    .bit_index (crc_bit_index),
+    .data (crc_data_buf),
+    .poly (crc_poly),
+    .init_value (crc_init),
+    .xor_out (crc_xor),
+    .crc (crc_result)
+  );
 
 endmodule
