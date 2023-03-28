@@ -1,5 +1,6 @@
 module crcN #(
-  parameter MAX_BITS = 64
+  parameter MAX_BITS = 32,
+  parameter MAX_BIT_COUNT = 5
 )(
   input clk,
   input rst,
@@ -7,7 +8,7 @@ module crcN #(
   input shift,
   input reflect_in,
   input reflect_out,
-  input [5:0] bitwidth,
+  input [MAX_BIT_COUNT-1:0] bitwidth,
   input [7:0] data,
   input [2:0] bit_index,
   input [MAX_BITS-1:0] poly,
@@ -25,13 +26,13 @@ module crcN #(
 
   reflect8 ref8 ( .inp(data), .outp(data_reflected));
 
-  reflect8N refout (
+  reflect8N #(MAX_BITS, 4, 2) refout(
     .value (crc_lfsr),
-    .bytewidth (bitwidth[5:3]),
+    .bytewidth (bitwidth[MAX_BIT_COUNT-1:3]),
     .reflected_value (crc_reflected)
   );
 
-  lfsrN #(MAX_BITS) lfsr (
+  lfsrN #(MAX_BITS, MAX_BIT_COUNT) lfsr (
     .clk (clk),
     .rst (rst),
     .load (initialize),

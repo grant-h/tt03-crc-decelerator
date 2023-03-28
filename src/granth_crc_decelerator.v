@@ -25,9 +25,15 @@
     Output current CRC byte
 */
 
-`define BITWIDTH 64
+`define BITWIDTH 32
+`define BITPOS_MAX (`BITWIDTH - 1)
+`define BITBITS (5) // 6 for 64-bits, 5 for 32-bits
+
 `define BYTEWIDTH (`BITWIDTH/8)
 `define NIBBLECOUNT (`BITWIDTH/4)
+
+`define NIBBLEBITS (`BITBITS-2) // 4 for 64-bits, 3 for 32-bits
+`define BYTEBITS (`NIBBLEBITS-1) // 3 for 64-bits, 2 for 32-bits
 
 module granth_crc_decelerator (
   input [7:0] io_in,
@@ -66,18 +72,19 @@ module granth_crc_decelerator (
 
   reg [2:0] setup_fsm;
   // Max nibbles is BITWIDTH/4
-  reg [3:0] setup_nibble_count;
+  reg [`NIBBLEBITS-1:0] setup_nibble_count;
 
   // CRC primary parameters
-  reg [5:0] bitwidth;
-  wire [5-2:0] bitwidth_nibbles;
+  reg [`BITBITS-1:0] bitwidth;
+  wire [3-1:0] bitwidth_nibbles;
   reg crc_reflect_in, crc_reflect_out;
   reg [`BITWIDTH-1:0] crc_poly;
   reg [`BITWIDTH-1:0] crc_init;
   reg [`BITWIDTH-1:0] crc_xor;
   wire [`BITWIDTH-1:0] crc_result;
 
-  assign bitwidth_nibbles = bitwidth[5:2];
+  // bitwidth >> 2
+  assign bitwidth_nibbles = bitwidth[`BITBITS-1:2];
 
   wire setup_starting = current_cmd == CMD_SETUP && setup_fsm == SETUP_START;
   wire restart_crc = current_cmd == CMD_RESET || setup_fsm == SETUP_DONE;
@@ -132,16 +139,16 @@ module granth_crc_decelerator (
   always @(posedge clk) begin
     if (rst) begin
       // A conservative default
-      bitwidth <= 32;
+      bitwidth <= 5'd31;
       crc_reflect_in <= 0;
       crc_reflect_out <= 0;
     end else begin
       if (setup_fsm == SETUP_CONFIG_LO) begin
-        bitwidth <= {bitwidth[5:4], cur_data_in};
+        bitwidth <= {bitwidth[`BITBITS-1:4], cur_data_in};
         crc_reflect_in <= crc_reflect_in;
         crc_reflect_out <= crc_reflect_out;
       end else if (setup_fsm == SETUP_CONFIG_HI) begin
-        bitwidth <= {cur_data_in[3:2], bitwidth[3:0]};
+        bitwidth <= {cur_data_in[2:2], bitwidth[3:0]};
         crc_reflect_in <= cur_data_in[0];
         crc_reflect_out <= cur_data_in[1];
       end else begin
@@ -240,10 +247,12 @@ module granth_crc_decelerator (
       1: final_output = crc_result[16-1:8];
       2: final_output = crc_result[24-1:16];
       3: final_output = crc_result[32-1:24];
+      `ifdef CRC64
       4: final_output = crc_result[40-1:32];
       5: final_output = crc_result[48-1:40];
       6: final_output = crc_result[56-1:48];
       7: final_output = crc_result[64-1:56];
+      `endif
       default: final_output = 0;
     endcase
   end
@@ -296,7 +305,7 @@ module granth_crc_decelerator (
     end
   end
 
-  crcN #(`BITWIDTH) crc_main(
+  crcN #(`BITWIDTH, `BITBITS) crc_main(
     .clk (clk),
     .rst (rst),
     .initialize (restart_crc),

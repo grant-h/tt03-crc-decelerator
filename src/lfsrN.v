@@ -1,14 +1,15 @@
 `default_nettype none
 
 module lfsrN #(
-  parameter MAX_BITS = 64
+  parameter MAX_BITS = 64,
+  parameter MAX_BIT_COUNT = 6
 )(
   input clk,
   input rst,
   input load,
   input shift,
   input data,
-  input [5:0] bitwidth, // TODO: use LOG2 macro
+  input [MAX_BIT_COUNT-1:0] bitwidth, // TODO: use LOG2 macro
   input [MAX_BITS-1:0] taps,
   input [MAX_BITS-1:0] init_value,
   output reg [MAX_BITS-1:0] value

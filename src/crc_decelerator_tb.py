@@ -5,6 +5,8 @@ from binascii import hexlify
 
 from common_test import *
 
+MAX_BITS = 32
+
 async def bringup(dut):
     dut._log.info("start")
 
@@ -35,6 +37,7 @@ async def test_power_up(dut):
 def build_config(dut, name):
     config = CRC_TABLE[name]
 
+    assert config.bitwidth <= MAX_BITS
     nibbles = config.bitwidth // 4
 
     config_lo = pack_to_nibbles(config.bitwidth, 4)
@@ -68,7 +71,7 @@ async def stream_in(dut, nibbles):
 async def test_CMD_SETUP(dut):
     await bringup(dut)
 
-    for crc_name in ["FAKE4", "FAKE8", "FAKE16", "FAKE32", "FAKE60", "FAKE4"]:
+    for crc_name in ["FAKE4", "FAKE8", "FAKE16", "FAKE32", "FAKE4"]:
         config = CRC_TABLE[crc_name]
         config_bitstream = build_config(dut, crc_name)
 

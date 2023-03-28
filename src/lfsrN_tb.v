@@ -2,14 +2,15 @@
 `timescale 1ns/1ps
 
 module lfsrN_tb #(
-  parameter WIDTH = 64
+  parameter WIDTH = 32,
+  parameter BIT_COUNT = 5
 )(
     input clk,
     input rst,
     input load,
     input shift,
     input data,
-    input [5:0] bitwidth,
+    input [BIT_COUNT-1:0] bitwidth,
     input [WIDTH-1:0] taps,
     input [WIDTH-1:0] init_value,
     output [WIDTH-1:0] value
@@ -22,7 +23,7 @@ module lfsrN_tb #(
     end
 
     // instantiate the DUT
-    lfsrN #(64) lfsr (
+    lfsrN #(WIDTH, BIT_COUNT) lfsr (
         `ifdef GL_TEST
             .vccd1( 1'b1),
             .vssd1( 1'b0),

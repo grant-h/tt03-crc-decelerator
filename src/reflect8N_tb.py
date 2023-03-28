@@ -3,14 +3,17 @@ from cocotb.triggers import Timer
 
 from common_test import reflect
 
+max_bytewidth = 4
+
 @cocotb.test()
 async def test_reflect8N(dut):
     dut._log.info("start")
 
     trials = 1000
+    up_down_widths = list(range(max_bytewidth)) + list(range(max_bytewidth-1, -1, -1))
 
     init_value = 0x1234567890abcdef
-    for bytewidth in list(range(8)) + list(range(7, -1, -1)):
+    for bytewidth in up_down_widths:
         bytewidth += 1
 
         dut._log.info("reflect8N_%d init_value", bytewidth)
@@ -27,7 +30,7 @@ async def test_reflect8N(dut):
         assert value == req_value
 
     # count up and then count down
-    for bytewidth in list(range(8)) + list(range(7, -1, -1)):
+    for bytewidth in up_down_widths:
         bytewidth += 1
         dut._log.info("reflect8N_%d", bytewidth)
 

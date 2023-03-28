@@ -4,9 +4,11 @@ from cocotb.triggers import RisingEdge, FallingEdge, Timer, ClockCycles
 
 from common_test import *
 
-lfsr_bits = 64
+lfsr_bits = 32
 init_value = 0x1234567890abcdef
-all_ones = (1 << lfsr_bits) - 1
+lfsr_mask = (1 << lfsr_bits) - 1
+all_ones = lfsr_mask
+init_value &= lfsr_mask
 
 async def bringup(dut):
     dut._log.info("start")
@@ -18,7 +20,7 @@ async def bringup(dut):
     dut.shift.value = False
     dut.load.value = False
     dut.data.value = 0
-    dut.bitwidth.value = (64-1)
+    dut.bitwidth.value = (lfsr_bits-1)
     dut.taps.value = 0
 
     await RisingEdge(dut.clk)
@@ -111,15 +113,11 @@ async def test_lfsr_shifting(dut):
 async def test_lfsr_bitwidth_shift(dut):
     await bringup(dut)
 
-@cocotb.test()
-async def test_lfsr_bitwidth_shift(dut):
-    await bringup(dut)
-
     test_value = 0xabcdef012345678
 
     dut.taps.value = 0x00
 
-    for bitwidth in range(1, 64):
+    for bitwidth in range(1, lfsr_bits):
         bitmask = (1 << bitwidth)-1
         init_value = test_value & bitmask
         dut._log.info("LFSR bitwidth %d - init 0x%x, %s",
