@@ -7,6 +7,10 @@ project:
 # Source files must be in ./src and you must list each source file separately
   source_files:        
     - granth_crc_decelerator.v
+    - crcN.v
+    - lfsrN.v
+    - reflect8.v
+    - reflect8N.v
 
   top_module:  "granth_crc_decelerator"      # put the name of your top module here, make it unique by prepending your github username
 
