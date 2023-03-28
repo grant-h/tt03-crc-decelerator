@@ -187,35 +187,31 @@ module granth_crc_decelerator (
     end
   end
 
-  genvar index;
-  generate for (index = 0; index < `NIBBLECOUNT; index = index + 1) begin: assign_poly
-    always @(posedge clk) begin
-      if (rst | setup_starting) begin
-        crc_poly <= `BITWIDTH'b0;
-        crc_init <= `BITWIDTH'b0;
-        crc_xor <= `BITWIDTH'b0;
+  always @(posedge clk) begin
+    if (rst | setup_starting) begin
+      crc_poly <= `BITWIDTH'b0;
+      crc_init <= `BITWIDTH'b0;
+      crc_xor <= `BITWIDTH'b0;
+    end else begin
+      if (setup_fsm == SETUP_POLY_N) begin
+        crc_poly[{setup_nibble_count, 2'b0} +: 4] <= cur_data_in;
+        crc_init <= crc_init;
+        crc_xor <= crc_xor;
+      end else if (setup_fsm == SETUP_INIT_N) begin
+        crc_poly <= crc_poly;
+        crc_init[{setup_nibble_count, 2'b0} +: 4] <= cur_data_in;
+        crc_xor <= crc_xor;
+      end else if (setup_fsm == SETUP_XOR_N) begin
+        crc_poly <= crc_poly;
+        crc_init <= crc_init;
+        crc_xor[{setup_nibble_count, 2'b0} +: 4] <= cur_data_in; 
       end else begin
-        if (setup_fsm == SETUP_POLY_N) begin
-          crc_poly[(index+1)*4-1:index*4] <= setup_nibble_count == index ? cur_data_in : crc_poly[(index+1)*4-1:index*4];
-          crc_init <= crc_init;
-          crc_xor <= crc_xor;
-        end else if (setup_fsm == SETUP_INIT_N) begin
-          crc_poly <= crc_poly;
-          crc_init[(index+1)*4-1:index*4] <= setup_nibble_count == index ? cur_data_in : crc_init[(index+1)*4-1:index*4];
-          crc_xor <= crc_xor;
-        end else if (setup_fsm == SETUP_XOR_N) begin
-          crc_poly <= crc_poly;
-          crc_init <= crc_init;
-          crc_xor[(index+1)*4-1:index*4] <= setup_nibble_count == index ? cur_data_in : crc_xor[(index+1)*4-1:index*4];
-        end else begin
-          crc_poly <= crc_poly;
-          crc_init <= crc_init;
-          crc_xor <= crc_xor;
-        end
+        crc_poly <= crc_poly;
+        crc_init <= crc_init;
+        crc_xor <= crc_xor;
       end
     end
   end
-  endgenerate
 
   /////////////////////////////////
   // CRC Datapath
