@@ -154,22 +154,24 @@ uint64_t crc_generic_unrolled(struct crc_info *param, const uint8_t *buf, size_t
   uint64_t crc = param->init;
 
   for (size_t i = 0; i < size; i++) {
-    uint8_t v = param->reflect_in ? reflect(buf[i], 8) : buf[i];
+    uint8_t v = buf[i];
+    int b = !param->reflect_in ? 7 : 0;
+    int dir = !param->reflect_in ? -1 : 1;
 
-    /*for (int b = 7; b >= 0; b--) {
-      crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << b)));
+    /*for (int j = 0; j < 8; j++) {
+      crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << b))); b += dir;
     }*/
 
     // Unroll
-    crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << 7)));
-    crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << 6)));
-    crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << 5)));
-    crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << 4)));
+    crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << b))); b += dir;
+    crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << b))); b += dir;
+    crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << b))); b += dir;
+    crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << b))); b += dir;
 
-    crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << 3)));
-    crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << 2)));
-    crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << 1)));
-    crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << 0)));
+    crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << b))); b += dir;
+    crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << b))); b += dir;
+    crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << b))); b += dir;
+    crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << b))); b += dir;
   }
 
   crc = param->reflect_out ? reflect(crc, param->bitwidth) : crc;
