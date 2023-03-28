@@ -24,7 +24,7 @@ module reflect8N (
     case (bytewidth)
       0: reflected_value = {56'b0, fb[0]};
       1: reflected_value = {48'b0, fb[0], fb[1]};
-      2: reflected_value = {36'b0, fb[0], fb[1], fb[2]};
+      2: reflected_value = {40'b0, fb[0], fb[1], fb[2]};
       3: reflected_value = {32'b0, fb[0], fb[1], fb[2], fb[3]};
       4: reflected_value = {24'b0, fb[0], fb[1], fb[2], fb[3], fb[4]};
       5: reflected_value = {16'b0, fb[0], fb[1], fb[2], fb[3], fb[4], fb[5]};

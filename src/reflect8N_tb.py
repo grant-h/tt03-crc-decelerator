@@ -7,9 +7,27 @@ from common_test import reflect
 async def test_reflect8N(dut):
     dut._log.info("start")
 
-    trials = 10000
+    trials = 1000
 
-    for bytewidth in range(8):
+    init_value = 0x1234567890abcdef
+    for bytewidth in list(range(8)) + list(range(7, -1, -1)):
+        bytewidth += 1
+
+        dut._log.info("reflect8N_%d init_value", bytewidth)
+
+        dut.bytewidth.value = bytewidth - 1
+        dut.value.value = init_value
+        # combinational delay
+        await Timer(10, units="ns")
+
+        #dut._log.info("%s", dut.reflected_value.value)
+        value = int(dut.reflected_value.value)
+        req_value = reflect(init_value, 8*bytewidth)
+        dut._log.info("%s REFLECT8N -> %s", bin(init_value), bin(req_value))
+        assert value == req_value
+
+    # count up and then count down
+    for bytewidth in list(range(8)) + list(range(7, -1, -1)):
         bytewidth += 1
         dut._log.info("reflect8N_%d", bytewidth)
 
