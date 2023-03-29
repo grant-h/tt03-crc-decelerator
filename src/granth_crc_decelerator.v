@@ -87,8 +87,9 @@ module granth_crc_decelerator (
   assign bitwidth_nibbles = bitwidth[`BITBITS-1:2];
 
   wire setup_starting = current_cmd == CMD_SETUP && setup_fsm == SETUP_START;
-  wire restart_crc = current_cmd == CMD_RESET || setup_fsm == SETUP_DONE;
-  wire in_setup = (setup_fsm != SETUP_START && setup_fsm != SETUP_DONE) || setup_starting;
+  wire restart_crc = current_cmd == CMD_RESET || setup_starting;
+  wire in_setup = setup_fsm != SETUP_START && !setup_can_exit;
+  wire setup_can_exit = setup_fsm == SETUP_DONE && cmd != CMD_SETUP;
 
   // TODO: handle non-nibble aligned bitwidth
   wire bitwidth_reached = bitwidth_nibbles == setup_nibble_count;
@@ -105,9 +106,10 @@ module granth_crc_decelerator (
       cur_data_in <= data_in;
   end
 
-  wire [7:0] setup_output = {7'b0, in_setup};;
-  // for debugging live
+  // for debugging FSM during live testing
+  wire [7:0] setup_output = {4'b0, setup_fsm, in_setup | setup_starting};
   wire [7:0] message_output = {3'b0, crc_bit_index, crc_state};
+
   reg [7:0] final_output;
 
   // Pin driving
@@ -138,7 +140,7 @@ module granth_crc_decelerator (
 
   always @(posedge clk) begin
     if (rst) begin
-      // A conservative default
+      // A conservative default (CRC-32)
       bitwidth <= 5'd31;
       crc_reflect_in <= 0;
       crc_reflect_out <= 0;
@@ -177,7 +179,7 @@ module granth_crc_decelerator (
     if (rst)
       setup_fsm <= SETUP_START;
     else begin
-      if (in_setup) begin
+      if (in_setup || setup_starting) begin
         case (setup_fsm)
           SETUP_START: setup_fsm <= SETUP_CONFIG_LO;
           SETUP_CONFIG_LO: setup_fsm <= SETUP_CONFIG_HI;
@@ -185,7 +187,8 @@ module granth_crc_decelerator (
           SETUP_POLY_N: if (bitwidth_reached) setup_fsm <= SETUP_INIT_N; else setup_fsm <= setup_fsm;
           SETUP_INIT_N: if (bitwidth_reached) setup_fsm <= SETUP_XOR_N; else setup_fsm <= setup_fsm;
           SETUP_XOR_N: if (bitwidth_reached) setup_fsm <= SETUP_DONE; else setup_fsm <= setup_fsm;
-          SETUP_DONE: setup_fsm <= SETUP_START;
+          // HOLD setup until command is released to prevent retriggering on combinational `cmd`
+          SETUP_DONE: if (setup_can_exit) setup_fsm <= SETUP_START; else setup_fsm <= setup_fsm;
           default: setup_fsm <= SETUP_START;
         endcase
       end else begin

@@ -55,6 +55,12 @@ class CRC_CMD(IntEnum):
     CMD_MESSAGE = 2
     CMD_FINAL = 3
 
+class CRC_STATE(IntEnum):
+    CRC_INIT = 0
+    CRC_DATA_LO = 1
+    CRC_DATA_HI = 2
+    CRC_SHIFTING = 3
+
 class SETUP_FSM(IntEnum):
     SETUP_START = 0
     SETUP_CONFIG_LO = 1

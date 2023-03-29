@@ -8,10 +8,11 @@ from common_test import *
 MAX_BITS = 32
 
 async def bringup(dut):
-    dut._log.info("start")
+    dut._log.info("BRINGUP")
 
     # init inputs
-    dut.io_in.value = 0
+    dut.cmd.value = 0
+    dut.data_in.value = 0
 
     clock = Clock(dut.clk, 10, units="ns")
     cocotb.start_soon(clock.start())
@@ -56,17 +57,39 @@ def build_config(dut, name):
     return config_bitstream
 
 async def stream_in(dut, nibbles):
+
     for i, n in enumerate(nibbles):
         dut.data_in.value = n
         await ClockCycles(dut.clk, 1)
-        assert dut.crc.current_cmd == CRC_CMD.CMD_SETUP
 
         # confirm that DUT is in SETUP
         if i == 0:
             assert dut.io_out[0].value == 1
+            assert dut.crc.current_cmd == CRC_CMD.CMD_SETUP
 
     # wait 1 cycle for pipeline to sync
     await ClockCycles(dut.clk, 1)
+
+@cocotb.test()
+async def test_e2e_crc8(dut):
+    await bringup(dut)
+    crc_name = "CRC-8"
+    config = CRC_TABLE["CRC-8"]
+    config_bitstream = build_config(dut, crc_name)
+    dut.cmd.value = CRC_CMD.CMD_SETUP
+
+    await ClockCycles(dut.clk, 1)
+    await stream_in(dut, config_bitstream)
+
+    dut._log.info("Config streamed")
+    await ClockCycles(dut.clk, 2)
+    # add extra cycles to ensure that SETUP is holding
+    await ClockCycles(dut.clk, 10)
+    assert dut.crc.in_setup == 1
+    assert int(dut.crc.bitwidth) == (config.bitwidth - 1)
+
+    dut.cmd.value = CRC_CMD.CMD_RESET
+    await ClockCycles(dut.clk, 2)
 
 @cocotb.test()
 async def test_CMD_SETUP(dut):
@@ -87,6 +110,7 @@ async def test_CMD_SETUP(dut):
 
         dut.cmd.value = CRC_CMD.CMD_RESET
 
+        assert int(dut.crc.crc_state.value) == CRC_STATE.CRC_INIT
         assert int(dut.crc.setup_fsm.value) == SETUP_FSM.SETUP_XOR_N
         await ClockCycles(dut.clk, 1)
 
