@@ -91,7 +91,7 @@ module granth_crc_decelerator (
   wire in_setup = (setup_fsm != SETUP_START && setup_fsm != SETUP_DONE) || setup_starting;
 
   // TODO: handle non-nibble aligned bitwidth
-  wire bitwidth_reached = bitwidth_nibbles == (setup_nibble_count + 1);
+  wire bitwidth_reached = bitwidth_nibbles == setup_nibble_count;
 
   /////////////////////////////////
   // Common Registers and Logic

@@ -39,9 +39,10 @@ def build_config(dut, name):
 
     assert config.bitwidth <= MAX_BITS
     nibbles = config.bitwidth // 4
+    bitwidth_minus = config.bitwidth - 1
 
-    config_lo = pack_to_nibbles(config.bitwidth, 4)
-    config_hi = pack_to_nibbles((((config.bitwidth >> 4) & 0x3) << 2) | (config.reflect_out << 1) | config.reflect_in, 4)
+    config_lo = pack_to_nibbles(bitwidth_minus, 4)
+    config_hi = pack_to_nibbles((((bitwidth_minus >> 4) & 0x3) << 2) | (config.reflect_out << 1) | config.reflect_in, 4)
     poly = pack_to_nibbles(config.poly, config.bitwidth)
     init = pack_to_nibbles(config.init, config.bitwidth)
     xor = pack_to_nibbles(config.xorout, config.bitwidth)
@@ -76,15 +77,13 @@ async def test_CMD_SETUP(dut):
         config_bitstream = build_config(dut, crc_name)
 
         dut.cmd.value = CRC_CMD.CMD_SETUP
-        #dut.data_in
-        print(config_bitstream)
 
         await ClockCycles(dut.clk, 1)
         await stream_in(dut, config_bitstream)
 
         dut._log.info("Config streamed")
 
-        assert dut.crc.bitwidth.value == config.bitwidth
+        assert dut.crc.bitwidth.value == (config.bitwidth - 1)
 
         dut.cmd.value = CRC_CMD.CMD_RESET
 
