@@ -4,6 +4,7 @@ from collections import namedtuple, OrderedDict
 
 CC = namedtuple("CrcConfig", "bitwidth check poly init reflect_in reflect_out xorout")
 
+CRC_CHECK_STRING = "123456789"
 CRC_TABLE = OrderedDict({
     # Name, bitwidth, check,    poly,   init,   reflect_in, reflect_out, xorout
     "CRC-8": CC(8,	0xF4,	0x07,	0x00,	False,	False,	0x00),

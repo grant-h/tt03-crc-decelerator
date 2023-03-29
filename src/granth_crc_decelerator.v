@@ -237,11 +237,11 @@ module granth_crc_decelerator (
 
   reg [1:0] crc_state;
   reg [2:0] crc_bit_index;
-  reg [2:0] crc_final_byte_index;
   reg [7:0] crc_data_buf;
+  wire [2:0] crc_final_byte_index = cur_data_in;
 
   wire cmd_message = current_cmd == CMD_MESSAGE;
-  wire cmd_final = current_cmd == CMD_MESSAGE;
+  wire cmd_final = current_cmd == CMD_FINAL;
   wire crc_shifting = crc_state == CRC_SHIFTING;
 
   always @(*) begin
@@ -296,15 +296,6 @@ module granth_crc_decelerator (
         crc_bit_index <= crc_bit_index + 1;
       else
         crc_bit_index <= 0;
-    end
-  end
-
-  always @(posedge clk) begin
-    if (rst | restart_crc | ~cmd_final)
-      crc_final_byte_index <= 0;
-    else begin
-      // overflow intended
-      crc_final_byte_index <= crc_final_byte_index + 1;
     end
   end
 

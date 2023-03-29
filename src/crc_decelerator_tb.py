@@ -57,7 +57,6 @@ def build_config(dut, name):
     return config_bitstream
 
 async def stream_in(dut, nibbles):
-
     for i, n in enumerate(nibbles):
         dut.data_in.value = n
         await ClockCycles(dut.clk, 1)
@@ -83,13 +82,31 @@ async def test_e2e_crc8(dut):
 
     dut._log.info("Config streamed")
     await ClockCycles(dut.clk, 2)
-    # add extra cycles to ensure that SETUP is holding
+    # add extra cycles to ensure that SETUP is holding, even though all data is streamed in
     await ClockCycles(dut.clk, 10)
     assert dut.crc.in_setup == 1
     assert int(dut.crc.bitwidth) == (config.bitwidth - 1)
 
     dut.cmd.value = CRC_CMD.CMD_RESET
     await ClockCycles(dut.clk, 2)
+    assert dut.crc.current_cmd.value == CRC_CMD.CMD_RESET
+
+    dut.cmd.value = CRC_CMD.CMD_MESSAGE
+    await ClockCycles(dut.clk, 1)
+
+    for c in CRC_CHECK_STRING.encode():
+        # stream in byte a nibble at a time
+        for v in [c & 0xf, (c >> 4) & 0xf]:
+            dut.data_in.value = v
+            await ClockCycles(dut.clk, 1)
+
+        # wait for byte to be processed
+        await ClockCycles(dut.clk, 8)
+
+    dut.data_in.value = 0
+    dut.cmd.value = CRC_CMD.CMD_FINAL
+    await ClockCycles(dut.clk, 2)
+    assert config.check == dut.io_out.value
 
 @cocotb.test()
 async def test_CMD_SETUP(dut):

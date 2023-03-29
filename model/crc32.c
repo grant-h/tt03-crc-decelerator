@@ -158,10 +158,14 @@ uint64_t crc_generic_unrolled(struct crc_info *param, const uint8_t *buf, size_t
     int b = !param->reflect_in ? 7 : 0;
     int dir = !param->reflect_in ? -1 : 1;
 
-    /*for (int j = 0; j < 8; j++) {
-      crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << b))); b += dir;
-    }*/
+    for (int j = 0; j < 8; j++) {
+      int bit = !!(v & (1 << b));
+      crc_datapath1(param, &crc, topbitmask, bitmask, bit);
+      printf("%d.%d: crc=%08x b=%d j=%d\n", i, j, crc, bit & 1, b);
+      b += dir;
+    }
 
+#if 0
     // Unroll
     crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << b))); b += dir;
     crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << b))); b += dir;
@@ -172,6 +176,7 @@ uint64_t crc_generic_unrolled(struct crc_info *param, const uint8_t *buf, size_t
     crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << b))); b += dir;
     crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << b))); b += dir;
     crc_datapath1(param, &crc, topbitmask, bitmask, !!(v & (1 << b))); b += dir;
+#endif
   }
 
   crc = param->reflect_out ? reflect(crc, param->bitwidth) : crc;

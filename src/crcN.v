@@ -22,7 +22,7 @@ module crcN #(
   assign crc = (reflect_out ? crc_reflected : crc_lfsr) ^ xor_out;
 
   wire [7:0] data_reflected;
-  wire current_bit = reflect_in ? data_reflected[bit_index] : data[bit_index];
+  wire current_bit = !reflect_in ? data_reflected[bit_index] : data[bit_index];
 
   reflect8 ref8 ( .inp(data), .outp(data_reflected));
 
