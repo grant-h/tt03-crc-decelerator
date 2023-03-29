@@ -5,8 +5,6 @@ from binascii import hexlify
 
 from common_test import *
 
-MAX_BITS = 32
-
 async def bringup(dut):
     dut._log.info("BRINGUP")
 
@@ -35,28 +33,7 @@ async def test_power_up(dut):
     assert dut.io_out == 0
     assert dut.crc.setup_fsm == 0
 
-def build_config(dut, name):
-    config = CRC_TABLE[name]
-
-    assert config.bitwidth <= MAX_BITS
-    nibbles = config.bitwidth // 4
-    bitwidth_minus = config.bitwidth - 1
-
-    config_lo = pack_to_nibbles(bitwidth_minus, 4)
-    config_hi = pack_to_nibbles((((bitwidth_minus >> 4) & 0x3) << 2) | (config.reflect_out << 1) | config.reflect_in, 4)
-    poly = pack_to_nibbles(config.poly, config.bitwidth)
-    init = pack_to_nibbles(config.init, config.bitwidth)
-    xor = pack_to_nibbles(config.xorout, config.bitwidth)
-
-    config_bitstream = config_lo + config_hi + poly + init + xor
-    config_bitstream_packed = pack_nibbles(*config_bitstream)
-
-    dut._log.info("%s config: %s" % (name, config_bitstream))
-    dut._log.info("%s config: %s" % (name, config_bitstream_packed))
-
-    return config_bitstream
-
-async def stream_in(dut, nibbles):
+async def stream_in_setup(dut, nibbles):
     for i, n in enumerate(nibbles):
         dut.data_in.value = n
         await ClockCycles(dut.clk, 1)
@@ -78,7 +55,7 @@ async def test_e2e_crc8(dut):
     dut.cmd.value = CRC_CMD.CMD_SETUP
 
     await ClockCycles(dut.clk, 1)
-    await stream_in(dut, config_bitstream)
+    await stream_in_setup(dut, config_bitstream)
 
     dut._log.info("Config streamed")
     await ClockCycles(dut.clk, 2)
@@ -113,13 +90,13 @@ async def test_CMD_SETUP(dut):
     await bringup(dut)
 
     for crc_name in ["FAKE4", "FAKE8", "FAKE16", "FAKE32", "FAKE4"]:
-        config = CRC_TABLE[crc_name]
+        config = CRC_TABLE_FAKE[crc_name]
         config_bitstream = build_config(dut, crc_name)
 
         dut.cmd.value = CRC_CMD.CMD_SETUP
 
         await ClockCycles(dut.clk, 1)
-        await stream_in(dut, config_bitstream)
+        await stream_in_setup(dut, config_bitstream)
 
         dut._log.info("Config streamed")
 
