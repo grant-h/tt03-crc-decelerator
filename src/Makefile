@@ -18,6 +18,16 @@ VERILOG_SOURCES += $(PWD)/granth_crc_decelerator.v \
 		   $(PWD)/lfsrN_tb.v \
 		   $(PWD)/crcN.v
 
+my_sim:
+	$(MAKE) clean sim TOPLEVEL=crc_decelerator_tb MODULE=crc_decelerator_tb
+	! grep failure results.xml
+	$(MAKE) clean sim TOPLEVEL=lfsrN_tb MODULE=lfsrN_tb
+	! grep failure results.xml
+	$(MAKE) clean sim TOPLEVEL=reflect8_tb MODULE=reflect8_tb
+	! grep failure results.xml
+	$(MAKE) clean sim TOPLEVEL=reflect8N_tb MODULE=reflect8N_tb
+	! grep failure results.xml
+
 else
 
 # gate level simulation requires some extra setup, you shouldn't need to touch this
@@ -30,7 +40,7 @@ VERILOG_SOURCES += $(PDK_ROOT)/sky130B/libs.ref/sky130_fd_sc_hd/verilog/primitiv
 VERILOG_SOURCES += $(PDK_ROOT)/sky130B/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v
 
 # this gets copied in by the GDS action workflow
-VERILOG_SOURCES += $(PWD)/gate_level_netlist.v
+VERILOG_SOURCES += $(PWD)/crc_decelerator_tb.v $(PWD)/gate_level_netlist.v
 endif
 
 # TOPLEVEL is the name of the toplevel module in your Verilog or VHDL file
@@ -38,16 +48,6 @@ TOPLEVEL = crc_decelerator_tb
 
 # MODULE is the basename of the Python test file
 MODULE = crc_decelerator_tb
-
-my_sim:
-	$(MAKE) clean sim TOPLEVEL=crc_decelerator_tb MODULE=crc_decelerator_tb
-	! grep failure results.xml
-	$(MAKE) clean sim TOPLEVEL=lfsrN_tb MODULE=lfsrN_tb
-	! grep failure results.xml
-	$(MAKE) clean sim TOPLEVEL=reflect8_tb MODULE=reflect8_tb
-	! grep failure results.xml
-	$(MAKE) clean sim TOPLEVEL=reflect8N_tb MODULE=reflect8N_tb
-	! grep failure results.xml
 
 # include cocotb's make rules to take care of the simulator setup
 include $(shell cocotb-config --makefiles)/Makefile.sim
