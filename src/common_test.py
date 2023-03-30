@@ -1,6 +1,11 @@
+import cocotb
+import os
 from enum import IntEnum
 from struct import pack, unpack
 from collections import namedtuple, OrderedDict
+
+GL_TEST = "GATES" in os.environ and os.environ["GATES"] == "yes"
+NGL_TEST = not GL_TEST
 
 CC = namedtuple("CrcConfig", "bitwidth check poly init reflect_in reflect_out xorout")
 
@@ -52,6 +57,7 @@ CRC_TABLE = OrderedDict({
     "CRC-8/MAXIM": CC(8,	0xA1,	0x31,	0x00,	True,	True,	0x00),
     "CRC-8/ROHC": CC(8,	0xD0,	0x07,	0xFF,	True,	True,	0x00),
     "CRC-8/WCDMA": CC(8,	0x25,	0x9B,	0x00,	True,	True,	0x00),
+    #"CRC-5/USB": CC(5,	0x19,	0x05,	0x1f,	True,	True,	0x1f),
 })
 
 # Used for easier visual inspection. Bogus check word
@@ -91,7 +97,7 @@ def pack_nibbles(*nibbles):
 
 def pack_to_nibbles(value, bitwidth):
     nibbles = []
-    assert bitwidth % 4 == 0
+    #assert bitwidth % 4 == 0
 
     for n in range(0, bitwidth, 4):
         nibbles.append(value & 0xf)
@@ -145,3 +151,20 @@ class SETUP_FSM(IntEnum):
     SETUP_XOR_N = 5
     SETUP_DONE = 6
 
+def list_dut_elements(dut, show_values=False):
+    for de in dut:
+        path = de._path
+        name = de._name
+
+        ignore = False
+        for ignore_prefix in ["_", "FILLER", "TAP", "PHY", "clkbuf_"]:
+            if name.startswith(ignore_prefix):
+                ignore = True
+                break
+
+        if ignore:
+            continue
+
+        dut._log.info("%s", de._path)
+        if isinstance(de, cocotb.handle.HierarchyObject):
+            list_dut_elements(de, show_values=show_values)
