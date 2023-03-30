@@ -1,4 +1,5 @@
 import cocotb
+import math
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, FallingEdge, Timer, ClockCycles
 from binascii import hexlify
@@ -47,45 +48,6 @@ async def stream_in_setup(dut, nibbles):
     await ClockCycles(dut.clk, 1)
 
 @cocotb.test()
-async def test_e2e_crc8(dut):
-    await bringup(dut)
-    crc_name = "CRC-8"
-    config = CRC_TABLE["CRC-8"]
-    config_bitstream = build_config(dut, crc_name)
-    dut.cmd.value = CRC_CMD.CMD_SETUP
-
-    await ClockCycles(dut.clk, 1)
-    await stream_in_setup(dut, config_bitstream)
-
-    dut._log.info("Config streamed")
-    await ClockCycles(dut.clk, 2)
-    # add extra cycles to ensure that SETUP is holding, even though all data is streamed in
-    await ClockCycles(dut.clk, 10)
-    assert dut.crc.in_setup == 1
-    assert int(dut.crc.bitwidth) == (config.bitwidth - 1)
-
-    dut.cmd.value = CRC_CMD.CMD_RESET
-    await ClockCycles(dut.clk, 2)
-    assert dut.crc.current_cmd.value == CRC_CMD.CMD_RESET
-
-    dut.cmd.value = CRC_CMD.CMD_MESSAGE
-    await ClockCycles(dut.clk, 1)
-
-    for c in CRC_CHECK_STRING.encode():
-        # stream in byte a nibble at a time
-        for v in [c & 0xf, (c >> 4) & 0xf]:
-            dut.data_in.value = v
-            await ClockCycles(dut.clk, 1)
-
-        # wait for byte to be processed
-        await ClockCycles(dut.clk, 8)
-
-    dut.data_in.value = 0
-    dut.cmd.value = CRC_CMD.CMD_FINAL
-    await ClockCycles(dut.clk, 2)
-    assert config.check == dut.io_out.value
-
-@cocotb.test()
 async def test_CMD_SETUP(dut):
     await bringup(dut)
 
@@ -121,3 +83,66 @@ async def test_CMD_SETUP(dut):
         assert config.xorout == dut.crc.crc_xor
         assert config.reflect_in == dut.crc.crc_reflect_in
         assert config.reflect_out == dut.crc.crc_reflect_out
+
+@cocotb.test()
+async def test_CMD_SETUP_hold(dut):
+    await bringup(dut)
+
+    crc_name = "CRC-8"
+    config = CRC_TABLE[crc_name]
+    config_bitstream = build_config(dut, crc_name)
+    dut.cmd.value = CRC_CMD.CMD_SETUP
+
+    await ClockCycles(dut.clk, 1)
+    await stream_in_setup(dut, config_bitstream)
+
+    dut._log.info("Config streamed")
+    await ClockCycles(dut.clk, 2)
+    # add extra cycles to ensure that SETUP is holding, even though all data is streamed in
+    await ClockCycles(dut.clk, 10)
+    assert dut.crc.in_setup == 1
+    assert int(dut.crc.bitwidth) == (config.bitwidth - 1)
+
+@cocotb.test()
+async def test_e2e_crc_all(dut):
+    await bringup(dut)
+
+    for crc_name in CRC_TABLE.keys():
+        config = CRC_TABLE[crc_name]
+        config_bitstream = build_config(dut, crc_name)
+        dut.cmd.value = CRC_CMD.CMD_SETUP
+
+        await ClockCycles(dut.clk, 1)
+        await stream_in_setup(dut, config_bitstream)
+
+        dut._log.info("Config streamed")
+        await ClockCycles(dut.clk, 2)
+        assert int(dut.crc.bitwidth) == (config.bitwidth - 1)
+
+        dut.cmd.value = CRC_CMD.CMD_RESET
+        await ClockCycles(dut.clk, 2)
+        assert dut.crc.current_cmd.value == CRC_CMD.CMD_RESET
+
+        dut.cmd.value = CRC_CMD.CMD_MESSAGE
+        await ClockCycles(dut.clk, 1)
+
+        for c in CRC_CHECK_STRING.encode():
+            # stream in byte a nibble at a time
+            for v in [c & 0xf, (c >> 4) & 0xf]:
+                dut.data_in.value = v
+                await ClockCycles(dut.clk, 1)
+
+            # wait for byte to be processed
+            await ClockCycles(dut.clk, 8)
+
+        dut.cmd.value = CRC_CMD.CMD_FINAL
+
+        for b in range(int(math.ceil(config.bitwidth/8))):
+            dut.data_in.value = b
+            await ClockCycles(dut.clk, 2)
+
+            crc_b = int(dut.io_out.value) & 0xff
+            expected_b = (config.check >> (b*8)) & 0xff
+            dut._log.info("CRC_RES%d [expected %02x == %02x]", b, expected_b, crc_b)
+
+            assert expected_b == crc_b
