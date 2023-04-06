@@ -26,9 +26,15 @@ module crcN #(
 
   reflect8 ref8 ( .inp(data), .outp(data_reflected));
 
-  reflect8N #(MAX_BITS, 4, 2) refout(
+  /*reflect8N #(MAX_BITS, 4, 2) refout(
     .value (crc_lfsr),
     .bytewidth (bitwidth[MAX_BIT_COUNT-1:3]),
+    .reflected_value (crc_reflected)
+  );*/
+
+  reflect1N #(MAX_BITS, MAX_BIT_COUNT) refout(
+    .value (crc_lfsr),
+    .bitwidth (bitwidth),
     .reflected_value (crc_reflected)
   );
 

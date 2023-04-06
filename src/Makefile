@@ -12,6 +12,7 @@ ifneq ($(GATES),yes)
 VERILOG_SOURCES += $(PWD)/granth_crc_decelerator.v \
 		   $(PWD)/crc_decelerator_tb.v \
 		   $(PWD)/reflect8_tb.v \
+		   $(PWD)/reflect1N.v \
 		   $(PWD)/reflect8.v \
 		   $(PWD)/reflect8N.v \
 		   $(PWD)/lfsrN.v \

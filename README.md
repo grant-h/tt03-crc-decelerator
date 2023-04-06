@@ -2,12 +2,14 @@
 
 # CRC Decelerator
 
-_"The worlds slowest CRC!"_
+_"The world's slowest CRC!"_
 
 The CRC decelerator is a reconfigurable CRC block that can be programmed to
-calculate different CRC values up to 64-bits with arbitrary length
+calculate different CRC values up to 32-bits with arbitrary length
 streamed input data. Since clock speeds are low, its unlikely that this CRC
 engine will be faster than the CPU streaming in data, hence "decelerator".
+
+## I/O Interface
 
 To begin, a `SETUP` bitstream containing the
 bitwidth, reflect in/out, CRC poly, init, and XOR out is sent.  Then the

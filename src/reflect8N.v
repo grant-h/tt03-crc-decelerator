@@ -30,10 +30,12 @@ module reflect8N #(
       1: reflected_value = {{MAX_BITS-16{1'b0}}, fb[0], fb[1]};
       2: reflected_value = {{MAX_BITS-24{1'b0}}, fb[0], fb[1], fb[2]};
       3: reflected_value = {{MAX_BITS-32{1'b0}}, fb[0], fb[1], fb[2], fb[3]};
-      /*4: reflected_value = {{MAX_BITS-40{1'b0}}, fb[0], fb[1], fb[2], fb[3], fb[4]};
+      `ifdef CRC64
+      4: reflected_value = {{MAX_BITS-40{1'b0}}, fb[0], fb[1], fb[2], fb[3], fb[4]};
       5: reflected_value = {{MAX_BITS-48{1'b0}}, fb[0], fb[1], fb[2], fb[3], fb[4], fb[5]};
       6: reflected_value = {{MAX_BITS-56{1'b0}}, fb[0], fb[1], fb[2], fb[3], fb[4], fb[5], fb[6]};
-      7: reflected_value = {       fb[0], fb[1], fb[2], fb[3], fb[4], fb[5], fb[6], fb[7]};*/
+      7: reflected_value = {                     fb[0], fb[1], fb[2], fb[3], fb[4], fb[5], fb[6], fb[7]};
+      `endif
       default:
          // never inferred
          reflected_value = 0;
