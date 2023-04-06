@@ -1,5 +1,6 @@
 import cocotb
 import math
+import random
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, FallingEdge, Timer, ClockCycles
 from cocotb.regression import TestFactory
@@ -117,7 +118,6 @@ def golden_crc(crc_name, inp):
     crc = config.init
 
     for c in inp:
-        c = ord(c)
         b, direction = (0, 1) if config.reflect_in else (7, -1)
 
         for i in range(8):
@@ -131,10 +131,10 @@ def golden_crc(crc_name, inp):
 
     return (crc ^ config.xorout) & bitmask
 
-async def test_crc_e2e(dut, crc_name=None):
-    await bringup(dut)
+async def test_crc_e2e(dut, crc_name=None, reset=True, test_string=CRC_CHECK_STRING):
+    if reset:
+        await bringup(dut)
 
-    #for crc_name in CRC_TABLE.keys():
     config = CRC_TABLE[crc_name]
     config_bitstream = build_config(dut, crc_name)
     dut.cmd.value = CRC_CMD.CMD_SETUP
@@ -153,7 +153,10 @@ async def test_crc_e2e(dut, crc_name=None):
     dut.cmd.value = CRC_CMD.CMD_MESSAGE
     await ClockCycles(dut.clk, 1)
 
-    for c in CRC_CHECK_STRING.encode():
+    if isinstance(test_string, str):
+        test_string = test_string.encode()
+
+    for c in test_string:
         # stream in byte a nibble at a time
         for v in [c & 0xf, (c >> 4) & 0xf]:
             dut.data_in.value = v
@@ -164,14 +167,15 @@ async def test_crc_e2e(dut, crc_name=None):
 
     dut.cmd.value = CRC_CMD.CMD_FINAL
 
-    dut._log.info("Golden CRC 0x%x", golden_crc(crc_name, CRC_CHECK_STRING))
+    golden_crc_result = golden_crc(crc_name, test_string)
+    dut._log.info("Golden CRC 0x%x", golden_crc_result)
 
     for b in range(int(math.ceil(config.bitwidth/8))):
         dut.data_in.value = b
         await ClockCycles(dut.clk, 2)
 
         crc_b = int(dut.io_out.value) & 0xff
-        expected_b = (config.check >> (b*8)) & 0xff
+        expected_b = (golden_crc_result >> (b*8)) & 0xff
         dut._log.info("CRC_RES%d [expected %02x == %02x]", b, expected_b, crc_b)
 
         assert expected_b == crc_b
@@ -187,5 +191,24 @@ class PostfixStr(str):
         return c
 
 tf = TestFactory(test_crc_e2e)
-tf.add_option('crc_name', CRC_TABLE.keys())
-tf.generate_tests(postfix=PostfixStr(["_" + x.replace("/", "_").replace("-", "_").lower() for x in CRC_TABLE.keys()]))
+crcs_to_test = CRC_TABLE.keys()
+tf.add_option('crc_name', crcs_to_test)
+tf.generate_tests(postfix=PostfixStr(["_" + x.replace("/", "_").replace("-", "_").lower() for x in crcs_to_test]))
+
+@cocotb.test()
+async def test_multi_random(dut):
+    random.seed(128937378398)
+    await bringup(dut)
+
+    trials = 10
+    test_amount = 20
+    crc_keys = list(CRC_TABLE.keys())
+
+    for trial in range(trials):
+        #await bringup(dut)
+        random.shuffle(crc_keys)
+
+        for crc_name in crc_keys[:test_amount]:
+            test_string = bytes(random.choice(range(0, 0x100)) for i in range(trial+1))
+            await test_crc_e2e(dut, crc_name, reset=False, test_string=test_string)
+
