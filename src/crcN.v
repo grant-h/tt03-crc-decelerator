@@ -18,19 +18,14 @@ module crcN #(
 );
   wire [MAX_BITS-1:0] crc_lfsr;
   wire [MAX_BITS-1:0] crc_reflected;
+  wire [MAX_BITS-1:0] bitmask = (1 << (bitwidth + 1)) - 1;
 
-  assign crc = (reflect_out ? crc_reflected : crc_lfsr) ^ xor_out;
+  assign crc = ((reflect_out ? crc_reflected : crc_lfsr) ^ xor_out) & bitmask;
 
   wire [7:0] data_reflected;
   wire current_bit = !reflect_in ? data_reflected[bit_index] : data[bit_index];
 
   reflect8 ref8 ( .inp(data), .outp(data_reflected));
-
-  /*reflect8N #(MAX_BITS, 4, 2) refout(
-    .value (crc_lfsr),
-    .bytewidth (bitwidth[MAX_BIT_COUNT-1:3]),
-    .reflected_value (crc_reflected)
-  );*/
 
   reflect1N #(MAX_BITS, MAX_BIT_COUNT) refout(
     .value (crc_lfsr),

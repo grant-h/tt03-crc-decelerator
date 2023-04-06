@@ -95,7 +95,7 @@ async def test_CMD_SETUP_hold(dut):
 
     await bringup(dut)
 
-    crc_name = "CRC-8"
+    crc_name = "CRC-8/SMBUS"
     config = CRC_TABLE[crc_name]
     config_bitstream = build_config(dut, crc_name)
     dut.cmd.value = CRC_CMD.CMD_SETUP
@@ -109,6 +109,27 @@ async def test_CMD_SETUP_hold(dut):
     await ClockCycles(dut.clk, 10)
     assert dut.crc.in_setup == 1
     assert int(dut.crc.bitwidth) == (config.bitwidth - 1)
+
+def golden_crc(crc_name, inp):
+    config = CRC_TABLE[crc_name]
+
+    bitmask = (1 << config.bitwidth) - 1
+    crc = config.init
+
+    for c in inp:
+        c = ord(c)
+        b, direction = (0, 1) if config.reflect_in else (7, -1)
+
+        for i in range(8):
+            ib = int(bool(c & (1 << b)))
+            msb = bool((crc >> (config.bitwidth - 1)) ^ ib)
+            crc_shifted = ((crc << 1) & bitmask)
+            crc = crc_shifted ^ config.poly if msb else crc_shifted
+            b += direction
+
+    crc = reflect(crc, config.bitwidth) if config.reflect_out else crc
+
+    return (crc ^ config.xorout) & bitmask
 
 async def test_crc_e2e(dut, crc_name=None):
     await bringup(dut)
@@ -142,6 +163,8 @@ async def test_crc_e2e(dut, crc_name=None):
         await ClockCycles(dut.clk, 8)
 
     dut.cmd.value = CRC_CMD.CMD_FINAL
+
+    dut._log.info("Golden CRC 0x%x", golden_crc(crc_name, CRC_CHECK_STRING))
 
     for b in range(int(math.ceil(config.bitwidth/8))):
         dut.data_in.value = b

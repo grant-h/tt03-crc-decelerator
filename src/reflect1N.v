@@ -7,7 +7,7 @@ module reflect1N #(
 )(
   input [MAX_BITS-1:0] value,
   input [MAX_BIT_COUNT-1:0] bitwidth,
-  output reg [MAX_BITS-1:0] reflected_value
+  output [MAX_BITS-1:0] reflected_value
 );
 
   wire [MAX_BITS-1:0] reflected;
