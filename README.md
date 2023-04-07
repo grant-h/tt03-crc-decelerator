@@ -12,6 +12,8 @@ faster than the CPU/microcontroller streaming in data, hence "decelerator".
 
 This TT03 project is the follow up to my earlier, full-custom VLSI version of a CRC-32 datapath, built in Cadence, and fabricated using the MOSIS service while attending my university. Read more about my original [the CRC-32 design](https://hernan.de/blog/vlsi-final-project/) and [check out the die shots](https://hernan.de/blog/crc-32-vlsi-design-die-shots/).
 
+![CRC Decelerator Block Diagram](/diagram/crc_decelerator_diag.png)
+
 [[**3D-View**]](https://grant-h.github.io/tt03-crc-decelerator/)
 
 <img src="https://grant-h.github.io/tt03-crc-decelerator/gds_render.png" width="500px" />
