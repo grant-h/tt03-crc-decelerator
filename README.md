@@ -1,4 +1,4 @@
-![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg)
+[![](../../workflows/gds/badge.svg)](../../actions/workflows/gds.yaml) [![](../../workflows/test/badge.svg)](../../actions/workflows/test.yaml)
 
 # CRC Decelerator
 
@@ -16,6 +16,10 @@ bitwidth, reflect in/out, CRC poly, init, and XOR out is sent.  Then the
 `MESSAGE` is streamed in 4-bits at a time until the message is complete.
 Finally, the `FINAL` is signaled, leading the final CRC value to be streamed out.
 To calculate another CRC fresh, send `RESET`.
+
+[[**3D-View**]](https://grant-h.github.io/tt03-crc-decelerator/)
+
+<img src="https://grant-h.github.io/tt03-crc-decelerator/gds_render.png" width="500px" />
 
 --------------
 
