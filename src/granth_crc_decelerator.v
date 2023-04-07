@@ -261,7 +261,8 @@ module granth_crc_decelerator (
   end
 
   always @(posedge clk) begin
-    if (rst | restart_crc)
+    // Unless the user is holding CMD_MESSAGE, do nothing
+    if (rst | restart_crc | ~cmd_message)
       crc_state <= CRC_INIT;
     else begin
       case (crc_state)
@@ -288,7 +289,7 @@ module granth_crc_decelerator (
   end
 
   always @(posedge clk) begin
-    if (rst | restart_crc)
+    if (rst | restart_crc | ~cmd_message)
       crc_bit_index <= 0;
     else begin
       if (crc_shifting)
