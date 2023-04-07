@@ -4,8 +4,7 @@
 
 _"The world's slowest CRC!"_
 
-The [Cyclic Redundancy
-Check](https://en.wikipedia.org/wiki/Cyclic_redundancy_check) Decelerator is a
+The [Cyclic Redundancy Check](https://en.wikipedia.org/wiki/Cyclic_redundancy_check) Decelerator is a
 reconfigurable CRC block that can be programmed to calculate any CRC
 up to 32-bits with arbitrary length, streamed input data. Since
 TinyTapeout 3 (TT03) I/O speeds are low, its unlikely that this CRC engine will be
