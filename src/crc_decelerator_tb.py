@@ -2,6 +2,7 @@ import cocotb
 import math
 import random
 from cocotb.clock import Clock
+from cocotb.wavedrom import trace
 from cocotb.triggers import RisingEdge, FallingEdge, Timer, ClockCycles
 from cocotb.regression import TestFactory
 from binascii import hexlify
@@ -26,6 +27,93 @@ async def bringup(dut):
     dut.rst.value = 0
     await RisingEdge(dut.clk)
     dut._log.info("reset done")
+
+#@cocotb.test()
+async def test_gen_diagrams(dut):
+    crc_name = "CRC-16/USB"
+
+    await bringup(dut)
+
+    with trace(dut.cmd, dut.crc.setup_fsm, dut.data_in, dut.crc.crc_poly, dut.crc.crc_init, dut.crc.crc_xor, dut.crc.crc_reflect_in, dut.crc.crc_reflect_out, clk=dut.clk) as waves:
+
+        config = CRC_TABLE[crc_name]
+        config_bitstream = build_config(dut, crc_name)
+        dut.cmd.value = CRC_CMD.CMD_SETUP
+
+        await ClockCycles(dut.clk, 1)
+        await stream_in_setup(dut, config_bitstream)
+
+        dut._log.info("Config streamed")
+        await ClockCycles(dut.clk, 2)
+        # add extra cycles to ensure that SETUP is holding, even though all data is streamed in
+        #await ClockCycles(dut.clk, 10)
+        assert dut.crc.in_setup == 1
+        assert int(dut.crc.bitwidth) == (config.bitwidth - 1)
+
+        for sig in waves._signals:
+            for name, hdl in sig._hdls.items():
+                if name in ["crc_poly", "crc_init", "crc_xor"]:
+                    for i in range(len(sig._data[name])):
+                        sig._data[name][i] = "0x%04x" % (int(sig._data[name][i]))
+                elif name =="data_in":
+                    for i in range(len(sig._data[name])):
+                        sig._data[name][i] = "0x%x" % (int(sig._data[name][i]))
+
+        print(waves.dumpj(
+                config={"hscale": 3, "skin": "narrow"},
+                header={"text":"CRC-16/USB Setup Bitstream", "tick": 0, "every": 2},
+            ).replace("'", ""))
+
+    with trace(dut.cmd, dut.crc.crc_state, dut.data_in, dut.crc.crc_result, clk=dut.clk) as waves:
+        test_string = CRC_CHECK_STRING.encode()
+
+        dut.cmd = CRC_CMD.CMD_RESET
+        await ClockCycles(dut.clk, 2)
+
+        dut.cmd.value = CRC_CMD.CMD_MESSAGE
+        await ClockCycles(dut.clk, 1)
+
+        for i, c in enumerate(test_string):
+            # stream in byte a nibble at a time
+            for v in [c & 0xf, (c >> 4) & 0xf]:
+                dut.data_in.value = v
+                await ClockCycles(dut.clk, 1)
+
+            # wait for byte to be processed
+            await ClockCycles(dut.clk, 1)
+            if i in [0, 1, 8]:
+                # extra gap to show more time passed
+                if i == 1:
+                    waves.insert_gap()
+
+                waves.insert_gap()
+                waves.disable()
+
+            await ClockCycles(dut.clk, 7)
+            if i in [0, 7, 8]:
+                waves.enable()
+
+        dut.data_in.value = 0
+
+        dut.cmd.value = CRC_CMD.CMD_FINAL
+        await ClockCycles(dut.clk, 3)
+
+        golden_crc_result = golden_crc(crc_name, test_string)
+        assert golden_crc_result == int(dut.crc.crc_result.value)
+
+        for sig in waves._signals:
+            for name, hdl in sig._hdls.items():
+                if name in ["crc_result"]:
+                    for i in range(len(sig._data[name])):
+                        sig._data[name][i] = "0x%04x" % (int(sig._data[name][i]))
+                elif name =="data_in":
+                    for i in range(len(sig._data[name])):
+                        sig._data[name][i] = "0x%x" % (int(sig._data[name][i]))
+
+        print(waves.dumpj(
+                config={"hscale": 3, "skin": "narrow"},
+                header={"text":"CRC-16/USB '123456789' Check Message", "tick": 0, "every": 2},
+            ).replace("'", ""))
 
 @cocotb.test()
 async def test_power_up(dut):
