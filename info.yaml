@@ -87,7 +87,7 @@ documentation:
 
       This process is best demonstrated using a timing diagram. For the example we'll be using the [CRC-16/USB](https://reveng.sourceforge.io/crc-catalogue/16.htm#crc.cat.crc-16-usb) parameters which are `width=16 poly=0x8005 init=0xffff refin=true refout=true xorout=0xffff check=0xb4c8`:
 
-      [![CRC-16/USB Setup Bitstream](/diagram/crc16_usb_setup.png)](/diagram/crc16_usb_setup.svg?raw=true)
+      ![CRC-16/USB Setup Bitstream](./diagram/crc16_usb_setup.png)
 
       The fully packed bitstream in hex is `f35008ffffffff`. The first nibble corresponds to `bitwidth[3:0] = 0xf`. This represents the value 15, which is one less than the bitwidth. This is because the CRC treats a bitwidth of zero as a CRC-1. You must pass in a bitwidth one less than the desired bitwidth to account for this. The second nibble unpacks as `4'b0011` in binary which makes the top 2-bits of the bitwidth be zero and sets reflect in and out to be true. The remaining nibbles are the configuration parameters least-significant nibble to most. Note that `setup_fsm` is internal to the design.
 
@@ -95,7 +95,7 @@ documentation:
 
       Once the CRC's parameters have been initialized, you can switch to `CMD_MESSAGE` to stream in data to be CRC'd one nibble at a time. CRCs typically use the check message of `123456789` which is `0x31 0x32 0x33 0x34 0x35 0x36 0x37 0x38 0x39` in individual bytes. Here is a timing diagram showing this message being streamed in and the CRC's result register:
 
-      [![CRC-16/USB 123456789 Check Message](/diagram/crc16_usb_message.png)](/diagram/crc16_usb_message.svg?raw=true)
+      ![CRC-16/USB 123456789 Check Message](./diagram/crc16_usb_message.png)
 
       The first break skips the 8 clock cycles for `0x31`. The second break skips the middle 6 bytes and the final break skips the last shifting clock cycles. Following `CMD_MESSAGE` you would signal `CMD_FINAL` on `cmd` to have the CRC value streamed out on the data output pins. Note that `crc_state` is internal to the design.
 
