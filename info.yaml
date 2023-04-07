@@ -49,24 +49,24 @@ documentation:
 
 # A description of what the inputs do
   inputs:               
-    - CLK
-    - RESET
-    - CMD0
-    - CMD1
-    - DIN0
-    - DIN1
-    - DIN2
-    - DIN3
+    - `clk`
+    - `rst`
+    - `cmd[0]`
+    - `cmd[1]`
+    - `data_in[0]`
+    - `data_in[1]`
+    - `data_in[2]`
+    - `data_in[3]`
 # A description of what the outputs do
   outputs:
-    - DOUT0
-    - DOUT1
-    - DOUT2
-    - DOUT3
-    - DOUT4
-    - DOUT5
-    - DOUT6
-    - DOUT7
+    - `data_out[0]`
+    - `data_out[1]`
+    - `data_out[2]`
+    - `data_out[3]`
+    - `data_out[4]`
+    - `data_out[5]`
+    - `data_out[6]`
+    - `data_out[7]`
 
 # The following fields are optional
   tag:          "crc, cyclic redundancy check"      # comma separated list of tags: test encryption, experiment, clock, animation, utility, industrial, pwm, fpga, alu, microprocessor, risc, riscv, sensor, signal generator, fft, filter, music, bcd, sound, serial, timer, random number generator, calculator, decoder, counter, puzzle, multiplier, game, oscillator,

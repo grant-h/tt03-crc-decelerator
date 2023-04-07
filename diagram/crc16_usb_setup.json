@@ -1,0 +1,58 @@
+{
+    "signal": [
+        {
+            "name": "clock",
+            "wave": "P................."
+        },
+        {
+            "name": "cmd",
+            "wave": "7...............=.",
+            "data": "CMD_SETUP 0x0"
+        },
+        {
+            "name": "data_in",
+            "wave": "34555566668888=...",
+            "data": "0xf 0x3 0x5 0x0 0x0 0x8 0xf 0xf 0xf 0xf 0xf 0xf 0xf 0xf 0x0"
+        },
+        {
+            "name": "setup_fsm",
+            "wave": "7345...6...8...9.7",
+            "data": "START CONHI CONLO POLY INIT XOR DONE START"
+        },
+
+        {
+            "name": "crc_poly",
+            "wave": "=...=..5..........",
+            "data": "0x0000 0x0005 0x8005"
+        },
+        {
+            "name": "crc_init",
+            "wave": "=.......===6......",
+            "data": "0x0000 0x000f 0x00ff 0x0fff 0xffff"
+        },
+        {
+            "name": "crc_xor",
+            "wave": "=...........===8..",
+            "data": "0x0000 0x000f 0x00ff 0x0fff 0xffff"
+        },
+        {
+            "name": "crc_reflect_in",
+            "wave": "0..1..............",
+            "data": ""
+        },
+        {
+            "name": "crc_reflect_out",
+            "wave": "0..1..............",
+            "data": ""
+        }
+    ],
+    "config": {
+        "hscale": 3,
+      "skin": "narrow"
+    },
+    "head":{
+       "text":"CRC-16/USB Setup Bitstream",
+       "tick": 0,
+       "every": 2
+    }
+}
