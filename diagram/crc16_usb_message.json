@@ -1,0 +1,37 @@
+{
+    "signal": [
+        {
+            "name": "clock",
+            "wave": "P.....|...|...|.."
+        },
+        {
+            "name": "cmd",
+            "wave": "9=.............=.",
+            "data": "RESET MESSAGE FINAL"
+        },
+        {
+            "name": "data_in",
+            "wave": "x.34.|34.|34.|=..",
+            "data": "0x1 0x3 0x2 0x3 0x9 0x3 0x0"
+        },
+        {
+            "name": "crc_state",
+            "wave": "=..345|345|345|==",
+            "data": "INIT DLO DHI SHIFT DLO DHI SHIFT DLO DHI SHIFT DLO INIT"
+        },
+        {
+            "name": "crc_result",
+            "wave": "==x...........=7.",
+            "data": "0xffff 0x0000 0x6991 0xb4c8"
+        }
+    ],
+    "head": {
+        "text": "CRC-16/USB 123456789 Check Message",
+        "tick": 0,
+        "every": 2
+    },
+    "config": {
+        "hscale": 3,
+        "skin": "narrow"
+    }
+}
